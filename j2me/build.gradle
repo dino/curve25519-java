@@ -1,5 +1,5 @@
 apply plugin: 'java'
-apply plugin: 'maven'
+apply plugin: 'maven-publish'
 apply plugin: 'signing'
 
 sourceCompatibility = 1.2
@@ -20,8 +20,8 @@ sourceSets {
 }
 
 dependencies {
-    testCompile project(':tests')
-    compile 'org.bouncycastle:bcprov-jdk12:130'
+    testImplementation project(':tests')
+    implementation 'org.bouncycastle:bcprov-jdk12:130'
 }
 
 
@@ -30,6 +30,7 @@ signing {
     sign configurations.archives
 }
 
+/*
 uploadArchives {
     configuration = configurations.archives
     repositories.mavenDeployer {
@@ -97,3 +98,4 @@ artifacts {
 
     archives packageSources
 }
+*/

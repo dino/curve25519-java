@@ -14,6 +14,7 @@
 #include "xeddsa.h"
 #include "internal_fast_tests.h"
 #include "gen_x.h"
+#include "crypto_additions.h"
 
 JNIEXPORT jbyteArray JNICALL Java_org_whispersystems_curve25519_NativeCurve25519Provider_generatePrivateKey
   (JNIEnv *env, jobject obj, jbyteArray random)
@@ -65,6 +66,27 @@ JNIEXPORT jbyteArray JNICALL Java_org_whispersystems_curve25519_NativeCurve25519
 
 JNIEXPORT jbyteArray JNICALL Java_org_whispersystems_curve25519_NativeCurve25519Provider_calculateSignature
   (JNIEnv *env, jobject obj, jbyteArray random, jbyteArray privateKey, jbyteArray message)
+{
+    jbyteArray signature       = (*env)->NewByteArray(env, 64);
+    uint8_t*   signatureBytes  = (uint8_t*)(*env)->GetByteArrayElements(env, signature, 0);
+    uint8_t*   randomBytes     = (uint8_t*)(*env)->GetByteArrayElements(env, random, 0);
+    uint8_t*   privateKeyBytes = (uint8_t*)(*env)->GetByteArrayElements(env, privateKey, 0);
+    uint8_t*   messageBytes    = (uint8_t*)(*env)->GetByteArrayElements(env, message, 0);
+    jsize      messageLength   = (*env)->GetArrayLength(env, message);
+
+    int result = curve25519_sign(signatureBytes, privateKeyBytes, messageBytes, messageLength, randomBytes);
+
+    (*env)->ReleaseByteArrayElements(env, signature, signatureBytes, 0);
+    (*env)->ReleaseByteArrayElements(env, random, randomBytes, 0);
+    (*env)->ReleaseByteArrayElements(env, privateKey, privateKeyBytes, 0);
+    (*env)->ReleaseByteArrayElements(env, message, messageBytes, 0);
+
+    if (result == 0) return signature;
+    else             (*env)->ThrowNew(env, (*env)->FindClass(env, "java/lang/AssertionError"), "Signature failed!");
+}
+
+JNIEXPORT jbyteArray JNICALL Java_org_whispersystems_curve25519_NativeCurve25519Provider_calculateXedSignature
+        (JNIEnv *env, jobject obj, jbyteArray random, jbyteArray privateKey, jbyteArray message)
 {
     jbyteArray signature       = (*env)->NewByteArray(env, 64);
     uint8_t*   signatureBytes  = (uint8_t*)(*env)->GetByteArrayElements(env, signature, 0);
@@ -144,6 +166,43 @@ JNIEXPORT jbyteArray JNICALL Java_org_whispersystems_curve25519_NativeCurve25519
     else             (*env)->ThrowNew(env, (*env)->FindClass(env, "org/whispersystems/curve25519/VrfSignatureVerificationFailedException"), "Invalid signature");
 }
 
+JNIEXPORT jbyteArray JNICALL Java_org_whispersystems_curve25519_NativeCurve25519Provider_edToMont
+        (JNIEnv *env, jobject obj, jbyteArray jedKeyBytes)
+{
+    jbyteArray jmontKeyBytes = (*env)->NewByteArray(env, 32);
+    uint8_t* edKeyBytes = (uint8_t*)(*env)->GetByteArrayElements(env, jedKeyBytes, 0);
+    uint8_t* montKeyBytes = (uint8_t*)(*env)->GetByteArrayElements(env, jmontKeyBytes, 0);
+
+    fe u;
+    fe y;
+    fe_frombytes(y, edKeyBytes);
+    fe_edy_to_montx(u, y);
+    fe_tobytes(montKeyBytes, u);
+
+    (*env)->ReleaseByteArrayElements(env, jedKeyBytes, edKeyBytes, 0);
+    (*env)->ReleaseByteArrayElements(env, jmontKeyBytes, montKeyBytes, 0);
+
+    return jmontKeyBytes;
+}
+
+JNIEXPORT jbyteArray JNICALL Java_org_whispersystems_curve25519_NativeCurve25519Provider_montToEd
+        (JNIEnv *env, jobject obj, jbyteArray jmontKeyBytes)
+{
+    jbyteArray jedKeyBytes = (*env)->NewByteArray(env, 32);
+    uint8_t* edKeyBytes = (uint8_t*)(*env)->GetByteArrayElements(env, jedKeyBytes, 0);
+    uint8_t* montKeyBytes = (uint8_t*)(*env)->GetByteArrayElements(env, jmontKeyBytes, 0);
+
+    fe u;
+    fe y;
+    fe_frombytes(u, montKeyBytes);
+    fe_montx_to_edy(y, u);
+    fe_tobytes(edKeyBytes, y);
+
+    (*env)->ReleaseByteArrayElements(env, jedKeyBytes, edKeyBytes, 0);
+    (*env)->ReleaseByteArrayElements(env, jmontKeyBytes, montKeyBytes, 0);
+
+    return jedKeyBytes;
+}
 
 JNIEXPORT jboolean JNICALL Java_org_whispersystems_curve25519_NativeCurve25519Provider_smokeCheck
   (JNIEnv *env, jobject obj, jint dummy)

@@ -1,5 +1,6 @@
 /**
  * Copyright (C) 2014-2016 Open Whisper Systems
+ * Copyright (c) 2026 Dino Team
  *
  * Licensed according to the LICENSE file in this repository.
  */
@@ -70,6 +71,9 @@ class NativeCurve25519Provider implements Curve25519Provider {
   public native byte[] calculateSignature(byte[] random, byte[] privateKey, byte[] message);
 
   @Override
+  public native byte[] calculateXedSignature(byte[] random, byte[] privateKey, byte[] message);
+
+  @Override
   public native boolean verifySignature(byte[] publicKey, byte[] message, byte[] signature);
 
   @Override
@@ -78,6 +82,12 @@ class NativeCurve25519Provider implements Curve25519Provider {
   @Override
   public native byte[] verifyVrfSignature(byte[] publicKey, byte[] message, byte[] signature)
       throws VrfSignatureVerificationFailedException;
+
+  @Override
+  public native byte[] edToMont(byte[] publicKey);
+
+  @Override
+  public native byte[] montToEd(byte[] publicKey);
 
   private native boolean smokeCheck(int dummy);
 

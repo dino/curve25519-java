@@ -1,5 +1,6 @@
 /**
  * Copyright (C) 2014-2016 Open Whisper Systems
+ * Copyright (c) 2026 Dino Team
  *
  * Licensed according to the LICENSE file in this repository.
  */
@@ -17,10 +18,14 @@ interface Curve25519Provider {
   byte[] generatePrivateKey(byte[] random);
 
   byte[] calculateSignature(byte[] random, byte[] privateKey, byte[] message);
+  byte[] calculateXedSignature(byte[] random, byte[] privateKey, byte[] message);
   boolean verifySignature(byte[] publicKey, byte[] message, byte[] signature);
   byte[] calculateVrfSignature(byte[] random, byte[] privateKey, byte[] message);
   byte[] verifyVrfSignature(byte[] publicKey, byte[] message, byte[] signature)
       throws VrfSignatureVerificationFailedException;
+
+  byte[] edToMont(byte[] publicKey);
+  byte[] montToEd(byte[] publicKey);
 
   byte[] getRandom(int length);
 

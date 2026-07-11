@@ -15,6 +15,7 @@ int fe_isequal(const fe f, const fe g);
 int fe_isreduced(const unsigned char* s);
 void fe_mont_rhs(fe v2, const fe u);
 void fe_montx_to_edy(fe y, const fe u);
+void fe_edy_to_montx(fe u, const fe y);
 void fe_sqrt(fe b, const fe a);
 
 int ge_isneutral(const ge_p3* q);

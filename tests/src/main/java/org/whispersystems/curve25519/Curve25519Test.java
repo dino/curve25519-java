@@ -142,6 +142,27 @@ public abstract class Curve25519Test extends TestCase {
     assertFalse(getInstance().verifySignature(keys.getPublicKey(), message, signature));
   }
 
+  public void testLargeXedSignatures() throws NoSuchAlgorithmException, InvalidKeyException, NoSuchProviderException {
+    Curve25519KeyPair keys      = getInstance().generateKeyPair();
+    byte[]            message   = new byte[1024 * 1024];
+    byte[]            signature = getInstance().calculateXedSignature(keys.getPrivateKey(), message);
+
+    assertTrue(getInstance().verifySignature(keys.getPublicKey(), message, signature));
+
+    signature[0] ^= 0x01;
+
+    assertFalse(getInstance().verifySignature(keys.getPublicKey(), message, signature));
+  }
+
+  public void testConversion() {
+    Curve25519KeyPair keys = getInstance().generateKeyPair();
+    byte[] pubOriginal = keys.getPublicKey();
+    byte[] pubEd = getInstance().montToEd(pubOriginal);
+    byte[] pubMont = getInstance().edToMont(pubEd);
+
+    assertThat(pubOriginal).isEqualTo(pubMont);
+  }
+
   protected Curve25519 getInstance() throws NoSuchProviderException {
     return Curve25519.getInstance(getProviderName());
   }

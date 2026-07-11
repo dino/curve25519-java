@@ -1,5 +1,6 @@
 /**
  * Copyright (C) 2014-2016 Open Whisper Systems
+ * Copyright (c) 2026 Dino Team
  *
  * Licensed according to the LICENSE file in this repository.
  */
@@ -54,8 +55,23 @@ public class OpportunisticCurve25519Provider implements Curve25519Provider {
   }
 
   @Override
+  public byte[] edToMont(byte[] publicKey) {
+    return delegate.edToMont(publicKey);
+  }
+
+  @Override
+  public byte[] montToEd(byte[] publicKey) {
+    return delegate.montToEd(publicKey);
+  }
+
+  @Override
   public byte[] calculateSignature(byte[] random, byte[] privateKey, byte[] message) {
     return delegate.calculateSignature(random, privateKey, message);
+  }
+
+  @Override
+  public byte[] calculateXedSignature(byte[] random, byte[] privateKey, byte[] message) {
+    return delegate.calculateXedSignature(random, privateKey, message);
   }
 
   @Override

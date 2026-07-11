@@ -1,105 +1,108 @@
 buildscript {
     repositories {
-        jcenter()
+        mavenCentral()
+        google()
     }
 
     dependencies {
-        classpath 'com.android.tools.build:gradle:2.2.0'
+        classpath 'com.android.tools.build:gradle:8.13.2'
     }
 }
 
 apply plugin: 'com.android.library'
-apply plugin: 'maven'
+apply plugin: 'maven-publish'
 apply plugin: 'signing'
 
 archivesBaseName = "curve25519-android"
 version          = version_number
 group            = group_info
+description      = 'Curve25519 library for Android'
 
 android {
+    namespace 'im.dino.curve25519'
     compileSdkVersion 21
-    buildToolsVersion "21.1.2"
+    buildToolsVersion "35.0.0"
 
-    sourceSets {
-        main {
-            jniLibs.srcDirs = ['libs']
+    defaultConfig {
+        minSdkVersion 21
+        testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
+    }
+
+    externalNativeBuild {
+        ndkBuild {
+            path 'jni/Android.mk'
         }
     }
 
-    libraryVariants.all { variant ->
-        variant.outputs.each { output ->
-            def outputFile = output.outputFile
-            if (outputFile != null && outputFile.name.endsWith('.aar')) {
-                def fileName = "${archivesBaseName}-${version}.aar"
-                output.outputFile = new File(outputFile.parent, fileName)
-            }
+    publishing {
+        singleVariant("release") {
+            withSourcesJar()
+            withJavadocJar()
         }
     }
 }
 
 repositories {
     mavenCentral()
+    google()
 }
 
 dependencies {
-    compile project(':java')
+    api project(':java')
 
-    androidTestCompile (project(":tests")) {
-        exclude module: 'junit'
-    }
+    androidTestImplementation (project(":tests"))
+    androidTestImplementation "androidx.test:runner:1.2.0"
 }
 
-signing {
-    required { has("release") && gradle.taskGraph.hasTask("uploadArchives") }
-    sign configurations.archives
-}
+afterEvaluate {
+    publishing {
+        publications {
+            release(MavenPublication) {
+                artifactId = 'curve25519-android'
+                pom {
+                    name = 'curve25519-android'
+                    description = project.description
+                    url = 'https://github.com/dino/curve25519-java'
+                    licenses {
+                        license {
+                            name = 'GNU General Public License, Version 3'
+                            url = 'https://www.gnu.org/licenses/gpl-3.0.txt'
+                        }
+                    }
+                    developers {
+                        developer {
+                            id = 'dino'
+                            name = 'Dino Team'
+                        }
+                    }
+                    scm {
+                        url = 'https://github.com/dino/curve25519-java'
+                        connection = 'scm:git:https://github.com/dino/curve25519-java.git'
+                        developerConnection = 'scm:git:ssh://github.com/dino/curve25519-java.git'
+                    }
+                }
 
-uploadArchives {
-    configuration = configurations.archives
-    repositories.mavenDeployer {
-        beforeDeployment { MavenDeployment deployment -> signing.signPom(deployment) }
-
-        repository(url: sonatypeRepo) {
-            authentication(userName: whisperSonatypeUsername, password: whisperSonatypePassword)
-        }
-
-        pom.project {
-            name 'curve25519-android'
-            packaging 'aar'
-            description 'Curve25519 library for Android'
-            url 'https://github.com/WhisperSystems/curve25519-java'
-
-            scm {
-                url 'scm:git@github.com:WhisperSystems/curve25519-java.git'
-                connection 'scm:git@github.com:WhisperSystems/curve25519-java.git'
-                developerConnection 'scm:git@github.com:WhisperSystems/curve25519-java.git'
+                from components.release
             }
-
-            licenses {
-                license {
-                    name 'GPLv3'
-                    url 'https://www.gnu.org/licenses/gpl-3.0.txt'
-                    distribution 'repo'
+        }
+        if (project.hasProperty('maven.central.username')) {
+            repositories {
+                maven {
+                    name = 'mavenCentral'
+                    url = 'https://ossrh-staging-api.central.sonatype.com/service/local/staging/deploy/maven2/'
+                    credentials {
+                        username project.getProperty('maven.central.username')
+                        password project.getProperty('maven.central.password')
+                    }
                 }
             }
-
-            developers {
-                developer {
-                    name 'Trevor Perrin'
-                    name 'Moxie Marlinspike'
-                }
-            }
         }
     }
-}
-
-task installArchives(type: Upload) {
-    description "Installs the artifacts to the local Maven repository."
-    configuration = configurations['archives']
-    repositories {
-        mavenDeployer {
-            repository url: "file://${System.properties['user.home']}/.m2/repository"
+    if (project.hasProperty('signing.gnupg.keyName')) {
+        signing {
+            useGpgCmd()
+            sign publishing.publications
         }
     }
+    tasks.getByPath("sourceReleaseJar").duplicatesStrategy = DuplicatesStrategy.EXCLUDE
 }
-

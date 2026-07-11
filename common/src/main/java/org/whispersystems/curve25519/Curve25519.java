@@ -1,5 +1,6 @@
 /**
  * Copyright (C) 2014-2016 Open Whisper Systems
+ * Copyright (c) 2026 Dino Team
  *
  * Licensed according to the LICENSE file in this repository.
  */
@@ -97,6 +98,15 @@ public class Curve25519 {
     return provider.calculateSignature(random, privateKey, message);
   }
 
+  public byte[] calculateXedSignature(byte[] privateKey, byte[] message) {
+    if (privateKey == null || privateKey.length != 32) {
+      throw new IllegalArgumentException("Invalid private key length!");
+    }
+
+    byte[] random = provider.getRandom(64);
+    return provider.calculateXedSignature(random, privateKey, message);
+  }
+
   /**
    * Verify a Curve25519 signature.
    *
@@ -154,6 +164,34 @@ public class Curve25519 {
     }
 
     return provider.verifyVrfSignature(publicKey, message, signature);
+  }
+
+  /**
+   * Converts the bytes of an Ed25519 public key point to a Curve25519 public key
+   *
+   * @param publicKey The Ed25519 public key
+   * @return he Curve25519 public key
+   */
+  public byte[] edToMont(byte[] publicKey) {
+    if (publicKey == null || publicKey.length != 32) {
+      throw new IllegalArgumentException("Invalid public key!");
+    }
+
+    return provider.edToMont(publicKey);
+  }
+
+  /**
+   * Converts the bytes of a Curve25519 public key point to an Ed25519 public key
+   *
+   * @param publicKey The Curve25519 public key
+   * @return he Ed25519 public key
+   */
+  public byte[] montToEd(byte[] publicKey) {
+    if (publicKey == null || publicKey.length != 32) {
+      throw new IllegalArgumentException("Invalid public key!");
+    }
+
+    return provider.montToEd(publicKey);
   }
 
   private static Curve25519Provider constructNativeProvider(SecureRandomProvider random) throws NoSuchProviderException {

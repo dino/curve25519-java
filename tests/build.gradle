@@ -1,22 +1,13 @@
-apply plugin: 'java'
+apply plugin: 'java-library'
 
-sourceCompatibility = 1.7
+sourceCompatibility = 1.8
 
 repositories {
     mavenCentral()
 }
 
 dependencies {
-    compile project(':java')
-    compile 'junit:junit:3.8.2'
-    compile 'org.easytesting:fest-assert:1.4'
-}
-
-test {
-    testLogging {
-        events 'passed'
-        showStandardStreams = true
-    }
-
-    include 'org/whispersystems/**'
+    api 'junit:junit:3.8.2'
+    api 'org.easytesting:fest-assert:1.4'
+    implementation project(':java')
 }
